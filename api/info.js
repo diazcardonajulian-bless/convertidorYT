@@ -57,6 +57,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Info error:', error);
-    return res.status(500).json({ error: 'Failed to get video info: ' + error.message });
+    return res.status(500).json({ error: error.message });
   }
 }

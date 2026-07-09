@@ -49,35 +49,29 @@ export default async function handler(req, res) {
     }
 
     const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const info = await ytdl.getInfo(fullUrl);
 
-    const title = sanitizeFilename(info.videoDetails.title);
-
-    const formatOptions = {
-      quality: quality === '320' ? 'highestaudio' : quality === '128' ? 'lowestaudio' : 'highestaudio',
+    const stream = await ytdl.download(fullUrl, {
+      quality: quality === '128' ? 'lowestaudio' : 'highestaudio',
       filter: 'audioonly'
-    };
+    });
 
-    const stream = await ytdl.download(fullUrl, formatOptions);
+    const info = await ytdl.getBasicInfo(fullUrl);
+    const title = sanitizeFilename(info.videoDetails.title);
 
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
 
     const reader = stream.getReader();
-    const pump = async () => {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        res.write(Buffer.from(value));
-      }
-      res.end();
-    };
-
-    await pump();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(Buffer.from(value));
+    }
+    res.end();
   } catch (error) {
     console.error('Download error:', error);
     if (!res.headersSent) {
-      return res.status(500).json({ error: 'Failed to download audio: ' + error.message });
+      return res.status(500).json({ error: error.message });
     }
   }
 }
