@@ -7,6 +7,6 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.12"
+    "ytdl-core-enhanced": "^2.3.0"
   }
 }

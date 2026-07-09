@@ -1,4 +1,4 @@
-const ytdl = require('@distube/ytdl-core');
+const ytdl = require('ytdl-core-enhanced');
 
 function extractVideoId(url) {
   const patterns = [
@@ -23,14 +23,6 @@ function sanitizeFilename(name) {
     .trim()
     .substring(0, 100) || 'audio';
 }
-
-const agent = ytdl.createAgent([], {
-  headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-  }
-});
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -58,13 +50,12 @@ module.exports = async (req, res) => {
     }
 
     const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const info = await ytdl.getBasicInfo(fullUrl, { agent });
+    const info = await ytdl.getInfo(fullUrl);
     const title = sanitizeFilename(info.videoDetails.title);
 
     const stream = ytdl(fullUrl, {
       quality: quality === '128' ? 'lowestaudio' : 'highestaudio',
-      filter: 'audioonly',
-      agent
+      filter: 'audioonly'
     });
 
     res.setHeader('Content-Type', 'audio/webm');
