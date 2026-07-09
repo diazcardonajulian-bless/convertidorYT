@@ -1,6 +1,4 @@
-import { YtdlCore } from '@ybd-project/ytdl-core/serverless';
-
-const ytdl = new YtdlCore();
+import { Innertube } from 'youtubei.js';
 
 function extractVideoId(url) {
   const patterns = [
@@ -48,18 +46,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid YouTube URL' });
     }
 
-    const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const youtube = await Innertube.create();
+    const info = await youtube.getInfo(videoId);
 
-    const stream = await ytdl.download(fullUrl, {
-      quality: quality === '128' ? 'lowestaudio' : 'highestaudio',
-      filter: 'audioonly'
+    const title = sanitizeFilename(info.basic_info.title);
+
+    const formats = info.chooseFormat({
+      type: 'audio',
+      quality: quality === '128' ? 'lowest' : 'highest'
     });
 
-    const info = await ytdl.getBasicInfo(fullUrl);
-    const title = sanitizeFilename(info.videoDetails.title);
+    const stream = await youtube.download(videoId, {
+      type: 'audio',
+      quality: quality === '128' ? 'lowest' : 'highest'
+    });
 
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
+    res.setHeader('Content-Type', 'audio/webm');
+    res.setHeader('Content-Disposition', `attachment; filename="${title}.webm"`);
 
     const reader = stream.getReader();
     while (true) {

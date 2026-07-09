@@ -1,6 +1,4 @@
-import { YtdlCore } from '@ybd-project/ytdl-core/serverless';
-
-const ytdl = new YtdlCore();
+import { Innertube } from 'youtubei.js';
 
 function extractVideoId(url) {
   const patterns = [
@@ -40,16 +38,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid YouTube URL' });
     }
 
-    const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const info = await ytdl.getBasicInfo(fullUrl);
+    const youtube = await Innertube.create();
+    const info = await youtube.getInfo(videoId);
 
-    const duration = info.videoDetails.lengthSeconds;
+    const duration = info.basic_info.duration;
     const minutes = Math.floor(duration / 60);
     const seconds = duration % 60;
 
     return res.status(200).json({
-      title: info.videoDetails.title,
-      channel: info.videoDetails.author.name,
+      title: info.basic_info.title,
+      channel: info.basic_info.author,
       duration: `${minutes}:${seconds.toString().padStart(2, '0')}`,
       durationSeconds: duration,
       thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
