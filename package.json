@@ -5,8 +5,5 @@
   "private": true,
   "engines": {
     "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "ytdl-core-enhanced": "^2.3.0"
   }
 }

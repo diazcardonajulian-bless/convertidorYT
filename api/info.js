@@ -1,4 +1,12 @@
-const ytdl = require('ytdl-core-enhanced');
+const COBALT_INSTANCES = [
+  'https://nuko-c.meowing.de',
+  'https://dog.kittycat.boo',
+  'https://rue-cobalt.xenon.zone',
+  'https://api.qwkuns.me',
+  'https://cobaltapi.kittycat.boo',
+  'https://cobaltapi.squair.xyz',
+  'https://api.cobalt.liubquanti.click'
+];
 
 function extractVideoId(url) {
   const patterns = [
@@ -39,20 +47,38 @@ module.exports = async (req, res) => {
     }
 
     const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const info = await ytdl.getInfo(fullUrl);
 
-    const duration = info.videoDetails.lengthSeconds || 0;
-    const minutes = Math.floor(duration / 60);
-    const seconds = duration % 60;
+    for (const instance of COBALT_INSTANCES) {
+      try {
+        const response = await fetch(instance, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: fullUrl,
+            downloadMode: 'auto',
+            filenameStyle: 'basic'
+          })
+        });
 
-    return res.status(200).json({
-      title: info.videoDetails.title || 'Unknown',
-      channel: info.videoDetails.author?.name || 'Unknown',
-      duration: `${minutes}:${seconds.toString().padStart(2, '0')}`,
-      durationSeconds: duration,
-      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-      videoId
-    });
+        const data = await response.json();
+
+        if (data.status === 'tunnel' || data.status === 'redirect') {
+          return res.status(200).json({
+            title: `YouTube Video ${videoId}`,
+            channel: 'YouTube',
+            downloadUrl: data.url,
+            filename: data.filename || `youtube-${videoId}`
+          });
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return res.status(500).json({ error: 'All instances failed' });
   } catch (error) {
     console.error('Info error:', error);
     return res.status(500).json({ error: error.message });

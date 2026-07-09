@@ -1,4 +1,12 @@
-const ytdl = require('ytdl-core-enhanced');
+const COBALT_INSTANCES = [
+  'https://nuko-c.meowing.de',
+  'https://dog.kittycat.boo',
+  'https://rue-cobalt.xenon.zone',
+  'https://api.qwkuns.me',
+  'https://cobaltapi.kittycat.boo',
+  'https://cobaltapi.squair.xyz',
+  'https://api.cobalt.liubquanti.click'
+];
 
 function extractVideoId(url) {
   const patterns = [
@@ -11,17 +19,6 @@ function extractVideoId(url) {
     if (match) return match[1];
   }
   return null;
-}
-
-function sanitizeFilename(name) {
-  if (!name || typeof name !== 'string') {
-    return 'audio';
-  }
-  return name
-    .replace(/[<>:"/\\|?*]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .substring(0, 100) || 'audio';
 }
 
 module.exports = async (req, res) => {
@@ -50,18 +47,38 @@ module.exports = async (req, res) => {
     }
 
     const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const info = await ytdl.getInfo(fullUrl);
-    const title = sanitizeFilename(info.videoDetails.title);
 
-    const stream = ytdl(fullUrl, {
-      quality: quality === '128' ? 'lowestaudio' : 'highestaudio',
-      filter: 'audioonly'
-    });
+    for (const instance of COBALT_INSTANCES) {
+      try {
+        const response = await fetch(instance, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: fullUrl,
+            downloadMode: 'audio',
+            audioFormat: 'mp3',
+            audioBitrate: quality || '128',
+            filenameStyle: 'basic'
+          })
+        });
 
-    res.setHeader('Content-Type', 'audio/webm');
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.webm"`);
+        const data = await response.json();
 
-    stream.pipe(res);
+        if (data.status === 'tunnel' || data.status === 'redirect') {
+          return res.status(200).json({
+            downloadUrl: data.url,
+            filename: data.filename || `youtube-${videoId}.mp3`
+          });
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return res.status(500).json({ error: 'All instances failed. Try again later.' });
   } catch (error) {
     console.error('Download error:', error);
     if (!res.headersSent) {

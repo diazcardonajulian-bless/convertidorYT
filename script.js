@@ -10,7 +10,8 @@ const status = document.getElementById('status');
 const qualityBtns = document.querySelectorAll('.quality-btn');
 
 let currentUrl = '';
-let selectedQuality = '192';
+let currentDownloadUrl = '';
+let selectedQuality = '128';
 
 analyzeBtn.addEventListener('click', analyzeVideo);
 urlInput.addEventListener('keydown', (e) => {
@@ -26,6 +27,19 @@ qualityBtns.forEach((btn) => {
 });
 
 downloadBtn.addEventListener('click', downloadAudio);
+
+function extractVideoId(url) {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
 
 async function analyzeVideo() {
   const url = urlInput.value.trim();
@@ -57,10 +71,13 @@ async function analyzeVideo() {
     }
 
     currentUrl = url;
-    thumbnail.src = data.thumbnail;
-    duration.textContent = data.duration;
-    title.textContent = data.title;
-    channel.textContent = data.channel;
+    currentDownloadUrl = data.downloadUrl;
+
+    const videoId = extractVideoId(url);
+    thumbnail.src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+    duration.textContent = '--:--';
+    title.textContent = data.title || 'Video de YouTube';
+    channel.textContent = data.channel || 'YouTube';
 
     videoInfo.classList.remove('hidden');
     hideStatus();
@@ -89,25 +106,14 @@ async function downloadAudio() {
       throw new Error(errorData.error || 'Error al descargar');
     }
 
-    const blob = await response.blob();
-    const contentDisposition = response.headers.get('Content-Disposition');
-    let filename = 'audio.webm';
+    const data = await response.json();
 
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename="?(.+?)"?$/);
-      if (match) filename = match[1];
+    if (data.downloadUrl) {
+      window.open(data.downloadUrl, '_blank');
+      showStatus('¡Descarga iniciada! Revisa tus descargas.', 'success');
+    } else {
+      throw new Error('No se pudo obtener el enlace de descarga');
     }
-
-    const downloadUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(downloadUrl);
-
-    showStatus('¡Descarga completada!', 'success');
   } catch (error) {
     showStatus(error.message || 'Error al descargar el audio', 'error');
   } finally {
