@@ -49,43 +49,19 @@ export default async function handler(req, res) {
     }
 
     const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const info = await ytdl.getFullInfo(fullUrl);
+    const info = await ytdl.getInfo(fullUrl);
 
     const title = sanitizeFilename(info.videoDetails.title);
 
-    const audioFormats = info.formats.filter(
-      (f) => f.mimeType?.startsWith('audio/') && f.hasAudio
-    );
+    const formatOptions = {
+      quality: quality === '320' ? 'highestaudio' : quality === '128' ? 'lowestaudio' : 'highestaudio',
+      filter: 'audioonly'
+    };
 
-    if (audioFormats.length === 0) {
-      return res.status(404).json({ error: 'No audio formats available' });
-    }
+    const stream = await ytdl.download(fullUrl, formatOptions);
 
-    let selectedFormat;
-
-    if (quality === '320') {
-      selectedFormat = audioFormats.reduce((best, curr) =>
-        (curr.audioBitrate || 0) > (best.audioBitrate || 0) ? curr : best
-      );
-    } else if (quality === '128') {
-      selectedFormat = audioFormats.reduce((best, curr) =>
-        (curr.audioBitrate || 0) < (best.audioBitrate || 0) ? curr : best
-      );
-    } else {
-      selectedFormat = audioFormats.reduce((best, curr) => {
-        const currDiff = Math.abs((curr.audioBitrate || 192) - 192);
-        const bestDiff = Math.abs((best.audioBitrate || 192) - 192);
-        return currDiff < bestDiff ? curr : best;
-      });
-    }
-
-    const stream = await ytdl.download(fullUrl, { format: selectedFormat });
-
-    const ext = selectedFormat.mimeType?.includes('webm') ? 'webm' : 'mp4';
-    const mimeType = selectedFormat.mimeType?.split(';')[0] || 'audio/webm';
-
-    res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.${ext}"`);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
 
     const reader = stream.getReader();
     const pump = async () => {
@@ -101,7 +77,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Download error:', error);
     if (!res.headersSent) {
-      return res.status(500).json({ error: 'Failed to download audio' });
+      return res.status(500).json({ error: 'Failed to download audio: ' + error.message });
     }
   }
 }

@@ -52,11 +52,11 @@ export default async function handler(req, res) {
       channel: info.videoDetails.author.name,
       duration: `${minutes}:${seconds.toString().padStart(2, '0')}`,
       durationSeconds: duration,
-      thumbnail: info.videoDetails.thumbnails.pop()?.url || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
       videoId
     });
   } catch (error) {
     console.error('Info error:', error);
-    return res.status(500).json({ error: 'Failed to get video info' });
+    return res.status(500).json({ error: 'Failed to get video info: ' + error.message });
   }
 }
