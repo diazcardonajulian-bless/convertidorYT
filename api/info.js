@@ -40,13 +40,15 @@ export default async function handler(req, res) {
     const youtube = await Innertube.create();
     const info = await youtube.getInfo(videoId);
 
-    const duration = info.basic_info.duration || 0;
+    const title = info.video?.title || info.basic_info?.title || 'Unknown';
+    const channel = info.video?.author || info.basic_info?.author || info.video?.channel?.name || 'Unknown';
+    const duration = info.basic_info?.duration || info.video?.duration || 0;
     const minutes = Math.floor(duration / 60);
     const seconds = duration % 60;
 
     return res.status(200).json({
-      title: info.basic_info.title,
-      channel: info.basic_info.author,
+      title: typeof title === 'object' ? title.toString() : title,
+      channel: typeof channel === 'object' ? channel.toString() : channel,
       duration: `${minutes}:${seconds.toString().padStart(2, '0')}`,
       durationSeconds: duration,
       thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,

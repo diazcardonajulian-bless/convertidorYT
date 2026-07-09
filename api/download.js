@@ -12,11 +12,14 @@ function extractVideoId(url) {
 }
 
 function sanitizeFilename(name) {
+  if (!name || typeof name !== 'string') {
+    return 'audio';
+  }
   return name
     .replace(/[<>:"/\\|?*]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
-    .substring(0, 100);
+    .substring(0, 100) || 'audio';
 }
 
 export default async function handler(req, res) {
@@ -48,7 +51,8 @@ export default async function handler(req, res) {
     const youtube = await Innertube.create();
     const info = await youtube.getInfo(videoId);
 
-    const title = sanitizeFilename(info.basic_info.title);
+    const rawTitle = info.video?.title || info.basic_info?.title || 'audio';
+    const title = sanitizeFilename(typeof rawTitle === 'object' ? rawTitle.toString() : rawTitle);
 
     const stream = await youtube.download(videoId, {
       type: 'audio',
