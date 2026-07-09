@@ -13,6 +13,14 @@ function extractVideoId(url) {
   return null;
 }
 
+const agent = ytdl.createAgent([], {
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  }
+});
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -39,7 +47,7 @@ module.exports = async (req, res) => {
     }
 
     const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const info = await ytdl.getBasicInfo(fullUrl);
+    const info = await ytdl.getBasicInfo(fullUrl, { agent });
 
     const duration = info.videoDetails.lengthSeconds || 0;
     const minutes = Math.floor(duration / 60);
