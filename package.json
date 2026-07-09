@@ -1,0 +1,12 @@
+{
+  "name": "convertidor-yt-mp3",
+  "version": "1.0.0",
+  "description": "Convertidor YouTube a MP3 sin anuncios",
+  "private": true,
+  "dependencies": {
+    "@ybd-project/ytdl-core": "^6.0.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

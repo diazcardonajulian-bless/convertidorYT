@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT a MP3 - Convertidor YouTube</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎵 YT a MP3</h1>
+      <p class="subtitle">Descarga audio de YouTube sin anuncios</p>
+    </header>
+
+    <main>
+      <div class="input-section">
+        <div class="input-group">
+          <input
+            type="text"
+            id="urlInput"
+            placeholder="Pega aquí el enlace de YouTube..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button id="analyzeBtn" class="btn btn-primary">
+            <span class="btn-text">Analizar</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+        </div>
+        <p class="hint">Soporta: youtube.com/watch, youtu.be, shorts, embed</p>
+      </div>
+
+      <div id="videoInfo" class="video-info hidden">
+        <div class="video-card">
+          <div class="thumbnail-container">
+            <img id="thumbnail" src="" alt="Thumbnail">
+            <span id="duration" class="duration-badge"></span>
+          </div>
+          <div class="video-details">
+            <h2 id="title" class="video-title"></h2>
+            <p id="channel" class="video-channel"></p>
+          </div>
+        </div>
+
+        <div class="quality-section">
+          <label>Calidad de audio:</label>
+          <div class="quality-options">
+            <button class="quality-btn" data-quality="128">
+              <span class="quality-label">128</span>
+              <span class="quality-unit">kbps</span>
+              <span class="quality-desc">Ligero</span>
+            </button>
+            <button class="quality-btn active" data-quality="192">
+              <span class="quality-label">192</span>
+              <span class="quality-unit">kbps</span>
+              <span class="quality-desc">Normal</span>
+            </button>
+            <button class="quality-btn" data-quality="320">
+              <span class="quality-label">320</span>
+              <span class="quality-unit">kbps</span>
+              <span class="quality-desc">Alta</span>
+            </button>
+          </div>
+        </div>
+
+        <button id="downloadBtn" class="btn btn-download">
+          <span class="btn-text">⬇ Descargar Audio</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+      </div>
+
+      <div id="status" class="status hidden"></div>
+    </main>
+
+    <footer>
+      <p>Sin anuncios • Sin registros • Gratis</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
