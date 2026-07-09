@@ -1,3 +1,5 @@
+const ytdl = require('@distube/ytdl-core');
+
 function extractVideoId(url) {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
@@ -22,7 +24,7 @@ function sanitizeFilename(name) {
     .substring(0, 100) || 'audio';
 }
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -47,32 +49,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid YouTube URL' });
     }
 
-    const { Innertube } = await import('youtubei.js');
-    const youtube = await Innertube.create();
-    const info = await youtube.getInfo(videoId);
+    const fullUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const info = await ytdl.getBasicInfo(fullUrl);
+    const title = sanitizeFilename(info.videoDetails.title);
 
-    const rawTitle = info.video?.title || info.basic_info?.title || 'audio';
-    const title = sanitizeFilename(typeof rawTitle === 'object' ? rawTitle.toString() : rawTitle);
-
-    const stream = await youtube.download(videoId, {
-      type: 'audio',
-      quality: quality === '128' ? 'lowest' : 'highest'
+    const stream = ytdl(fullUrl, {
+      quality: quality === '128' ? 'lowestaudio' : 'highestaudio',
+      filter: 'audioonly'
     });
 
     res.setHeader('Content-Type', 'audio/webm');
     res.setHeader('Content-Disposition', `attachment; filename="${title}.webm"`);
 
-    const reader = stream.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      res.write(Buffer.from(value));
-    }
-    res.end();
+    stream.pipe(res);
   } catch (error) {
     console.error('Download error:', error);
     if (!res.headersSent) {
       return res.status(500).json({ error: error.message });
     }
   }
-}
+};
