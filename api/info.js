@@ -1,5 +1,3 @@
-import { Innertube } from 'youtubei.js';
-
 function extractVideoId(url) {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
@@ -38,10 +36,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid YouTube URL' });
     }
 
+    const { Innertube } = await import('youtubei.js');
     const youtube = await Innertube.create();
     const info = await youtube.getInfo(videoId);
 
-    const duration = info.basic_info.duration;
+    const duration = info.basic_info.duration || 0;
     const minutes = Math.floor(duration / 60);
     const seconds = duration % 60;
 
